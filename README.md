@@ -349,3 +349,79 @@
 # plt.figure(figsize=(12, 8))
 # plot_tree(model, filled=True, feature_names=x.columns.tolist(), class_names=['No', 'Yes'])
 # plt.show()
+
+
+#navie bais
+import re
+from collections import defaultdict
+import math
+
+# Function to preprocess text
+def preprocess_text(text):
+    text = text.lower()
+    text = re.sub(r'[^\w\s]', '', text)  # Remove punctuation
+    return text.split()  # Tokenize into words
+
+# Function to train Naive Bayes Classifier
+def train_naive_bayes(data):
+    spam_count = 0
+    ham_count = 0
+    word_counts = {'spam': defaultdict(int), 'ham': defaultdict(int)}
+    total_words = {'spam': 0, 'ham': 0}
+
+    for label, message in data:
+        words = preprocess_text(message)
+        if label == 'spam':
+            spam_count += 1
+            for word in words:
+                word_counts['spam'][word] += 1
+                total_words['spam'] += 1
+        else:
+            ham_count += 1
+            for word in words:
+                word_counts['ham'][word] += 1
+                total_words['ham'] += 1
+
+    prior_spam = spam_count / len(data)
+    prior_ham = ham_count / len(data)
+    vocabulary = set(word_counts['spam'].keys()).union(set(word_counts['ham'].keys()))
+
+    return {
+        'prior_spam': prior_spam,
+        'prior_ham': prior_ham,
+        'word_counts': word_counts,
+        'total_words': total_words,
+        'vocabulary': vocabulary,
+    }
+
+# Function to predict if a message is spam or ham
+def predict_naive_bayes(model, message):
+    words = preprocess_text(message)
+    spam_score = math.log(model['prior_spam'])
+    ham_score = math.log(model['prior_ham'])
+
+    for word in words:
+        # Calculate probabilities with Laplace Smoothing
+        spam_word_prob = (model['word_counts']['spam'][word] + 1) / (model['total_words']['spam'] + len(model['vocabulary']))
+        ham_word_prob = (model['word_counts']['ham'][word] + 1) / (model['total_words']['ham'] + len(model['vocabulary']))
+        spam_score += math.log(spam_word_prob)
+        ham_score += math.log(ham_word_prob)
+
+    return 'spam' if spam_score > ham_score else 'ham'
+
+# Example Dataset
+data = [
+    ('spam', "Win a free prize now"),
+    ('ham', "Are you coming to the meeting?"),
+    ('spam', "Limited offer, click to claim your reward"),
+    ('ham', "Hello, how have you been?"),
+    ('spam', "Exclusive deal just for you"),
+    ('ham', "Don't forget the project deadline"),
+]
+
+# Train the model
+model = train_naive_bayes(data)
+
+# Test the model
+test_message = "Win a reward now"
+print(f"Message: '{test_message}' is classified as: {predict_naive_bayes(model, test_message)}")
