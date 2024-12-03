@@ -95,6 +95,14 @@
 # else:
 #     print('Patient is Cured')
 
+x_range = np.linspace(min(x), max(x), 100)  
+y_pred = beta_0 + beta_1 * x_range  
+y_prob = 1 / (1 + np.exp(-y_pred)) 
+
+plt.scatter(df['medication dosage'], df['probability'], color='blue', label='Data points')
+plt.plot(x_range, y_prob, color='red', label='Logistic Regression Curve', linewidth=2)
+plt.show()
+
 # 4-) Backpropogation XOR
 
 # import numpy as np
